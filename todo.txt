@@ -1,0 +1,6 @@
+* implement bot fork strategies
+* implement target selectors
+
+* implement plotting scripts
+* sanity check
+

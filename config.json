@@ -1,0 +1,31 @@
+{
+  "logfile": "log.txt",
+  "endtime": 100000,
+  "maxhid": 10000,
+  "frac_vulnerable": 0.01,
+  "bot": {
+    "class": "FixedRateBot",
+    "params": [10.0],
+  },
+  "botcache": {
+    "class": "NullCache",
+    "params": []
+  },
+  "e2e_latency": {
+    "min": 0.010,
+    "max": 0.050,
+    "timeout": 2.0
+  },
+  "nrtts_auth": 7,
+  "nrtts_infect": 70,
+  "dists": {
+    "host_on_time": {
+      "dist": "Exponential",
+      "params": [3600.0]
+    },
+    "host_off_time": {
+      "dist": "Exponential",
+      "params": [3600.0]
+    }
+  }
+}

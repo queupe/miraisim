@@ -1,0 +1,140 @@
+\section{Simulador de \emph{malware}}
+\label{sec:sim}
+
+Nesta seção apresentamos o simulador construído para validar
+empiricamente a precisão do nosso modelo analítico.  Nosso simulador
+é flexível e permite a avaliação de \emph{malware} com diferentes
+padrões de comportamento.
+
+\subsection{Configuração da rede e dispositivos}
+
+Nosso simulador permite a configuração da rede e dos dispositivos
+dos parâmetros mostrados na tabela~\ref{tab:sim.params}.  Em
+particular, o simulador permite execução de redes com diferentes
+quantidades $N_v$ e $N_s$ de dispositivos vulneráveis
+e invulneráveis, i.e., que podem e não podem ser infectados pelo
+\emph{malware}.  Também é possível configurar a quantidade $N_m$ de
+dispositivos que executam o \emph{malware} continuamente.  Os
+dispositivos vulneráveis e invulneráveis poder ser desligados
+e religados.  A duração dos períodos nos quais os dispositivos
+permanecem ligados e desligados é escolhida aleatoriamente segundo
+distribuições estatísticas, $D_\textrm{on}$ e $D_\textrm{off}$.
+Para capturar a volatilidade de \emph{malwares} comuns em
+dispositivos IoT, que não possuem armazenamento persistente,
+o simulador considera que um dispositivo vulnerável volta
+à configuração de fábrica (i.e., não infectado) quando é religado.
+
+\begin{table}
+	\begin{center}
+		\begin{tabular}{ll}
+			\textsc{Param.} & \textsc{Descrição} \\
+			\hline
+			\multicolumn{2}{l}{\emph{Tamanho da rede}} \\
+			$N_s$ & Número de dispositivos não vulneráveis \\
+			$N_v$ & Número de dispositivos vulneráveis \\
+			$N_m$ & Número de dispositivos executando o malware \\
+			\hline
+			\multicolumn{2}{l}{\emph{Comportamento dos dispositivos}} \\
+			$D_\textrm{on}$ & Distribuição do período ligado (on-time) \\
+			$D_\textrm{off}$ & Distribuição do período desligados (off-time) \\
+			\hline
+			\multicolumn{2}{l}{\emph{Latência fim-a-fim}} \\
+			$l_\textrm{min}$ & Latência fim-a-fim mínima \\
+			$l_\textrm{max}$ & Latência fim-a-fim máxima \\
+			$l_\textrm{tout}$ & \emph{Timeout} de conexão \\
+			$R_\textrm{auth}$ & Distribuição de RTTs em uma tentativa de autenticação \\
+			$R_\textrm{infect}$ & Distribuição de RTTs em uma tentativa de infecção \\
+		\end{tabular}
+		\caption{Parâmetros de configuração da rede e dos dispositivos no simulador.}
+		\label{tab:sim.params}
+	\end{center}
+\end{table}
+
+O simulador calcula uma latência de comunicação fim-a-fim distinta
+para cada par de dispositivos na rede. A latência fim-a-fim para
+cada par de dispositivos é uniformemente distribuída entre
+$[l_\textrm{min}, l_\textrm{max}]$.  A latência fim-a-fim entre um
+dispositivo executando o \emph{malware} e um dispositivo alvo
+é utilizada para calcular o tempo total de uma tentativa de
+autenticação e de uma tentativa de infecção.  Em particular,
+multiplicamos a latência fim-a-fim pela quantidade de trocas de
+mensagens fim-a-fim (RTTs) em tentativas de autenticação e em
+tentativas de infecção.  A quantidade de mensagens em tentativas de
+autenticação e infecção é segundo distribuições estatísticas
+($R_\textrm{auth}$ e $R_\textrm{infect}$).  Por último,
+$l_\textrm{tout}$ controla o intervalo no qual o \emph{malware}
+espera por uma resposta do dispositivo alvo antes de desistir da
+tentativa de autenticação ou de infecção.  Em particular,
+dispositivos invulneráveis ou previamente infectados não respondem
+a tentativas de autenticação e de infecção.
+
+\subsection{Configuração e comportamento do \emph{malware})
+
+O simulador implementa diferentes variações de comportamento do
+processo de sondagem e do mecanismo de escolha de alvos em
+\emph{malwares}.  O simulador considera que todos os dispositivos
+infectados executam a mesma configuração do \emph{malware} (e.g.,
+participam da mesma \emph{botnet}).
+
+O processo de sondagem controla como o \emph{malware} gera novas
+tentativas de autenticação e infecção.  O simulador implementa três
+processos de sondagem:
+
+\begin{description}
+%
+	\item[FixedRate] No processo FixedRate, o \emph{malware}
+		cria tentativas de autenticação e infecção a uma
+		taxa fixa, independente da duração ou sucesso das
+		tentativas.
+%
+	\item[FixedThreads] No processo FixedThreads,
+		o \emph{malware} executa uma quantidade fixa de
+		\emph{threads} que executam uma tentativa de
+		autenticação e, em caso de sucesso, uma tentativa de
+		infecção.  Após as tentativas de autenticação
+		e infecção, a \emph{thread} escolhe um novo alvo
+		e repete o processo.
+%
+	\item[FixedForkingThreads] No processo FixedForkingThreads,
+		o \emph{malware} executa uma quantidade fixa de
+		\emph{threads} que executam uma tentativa de
+		autenticação e, em caso de sucesso, disparam uma
+		nova \emph{thread}$^\prime$ independente para
+		executar a tentativa de infecção.  Após a tentativa
+		de autenticação, a \emph{thread} escolhe novo alvo
+		e repete o processo.
+%
+\end{description}
+
+Tentativas de autenticação podem falhar por que o dispositivo alvo
+é invulnerável ou por que já foi infectado.  Em ambos os caso,
+o dispositivo alvo não responde à tentativa de autenticação, que
+falha depois de $l_\mathrm{tout}$ segundos.  Tentativas de infecção
+podem falhar por que o dispositivo vulnerável foi infectado por
+outro \emph{malware} executando em paralelo.  (Quando múltiplos
+\emph{malwares} tentam infectar um dispositivo vulnerável ao mesmo
+tempo, apenas um irá obter sucesso.)
+
+O mecanismo de escolha de alvos controla como o \emph{malware} gera
+novos alvos para infecção.  O simulador implementa três mecanismos
+para geração de alvos:
+
+\begin{description}
+%
+	\item[NoCache] No mecanismo NoCache, alvos são selecionados
+		aleatoriamente entre todos os dispositivos.
+%
+	\item[LocalCache] No mecanismo LocalCache, o \emph{malware}
+		mantém uma lista de dispositivos sondados
+		anteriormente onde tentativas de autenticação ou
+		infecção falharam.  Dispositivos são removidos da
+		lista após um período configurável para permitir
+		reinfecção de dispositivos religados.  Alvos que não
+		estão na lista são selecionados aleatoriamente.
+%
+	\item[GlobalCache] Similar ao mecanismo LocalCache, mas os
+		\emph{malwares} compartilham informação sobre quais
+		dispositivos sondaram.
+%
+\end{description}
+
