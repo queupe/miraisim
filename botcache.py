@@ -1,9 +1,10 @@
+import collections
 import random
 
 
 def create_factory(config):
     name = config['botcache']['class']
-    globals()[name].Factory(config)
+    return globals()[name].Factory(config)
 
 
 class NullCache(object):# {{{
@@ -19,7 +20,7 @@ class NullCache(object):# {{{
         self.maxhid = int(maxhid)
 
     def get_target(self):
-        return random.randint(0, self.maxhid)
+        return random.randint(1, self.maxhid - 1)
 
     def set_unreach(self, hid):
         pass
@@ -37,32 +38,34 @@ class LocalTimeoutCache(object):# {{{
         def __init__(self, config):
             assert len(config['botcache']['params']) == 1
             self.timeout = float(config['botcache']['params'][0])
-            self.maxhid = int(config['maxhid'])
+            self.shared_targets = set(i for i in range(1, self.maxhid))
         def __call__(self):
-            return LocalTimeoutCache(self.timeout, self.maxhid)
+            return LocalTimeoutCache(self.timeout, self.shared_targets)
     # }}}
 
-    def __init__(self, timeout, maxhid):
+    def __init__(self, timeout, shared_targets):
         self.timeout = float(timeout)
-        self.maxhid = int(maxhid)
-        self.hid2tstamp = dict()
+        self.shared_targets = shared_targets
+        self.hids = set()
+        self.timestamps = collections.deque()
 
     def get_target(self):
-        hid = random.randint(1, self.maxhid - 1)
-        # stop iteration at the previous hid:
-        end = (hid + self.maxhid - 1) % self.maxhid
-        while hid in self.hid2tstamp and hid != end:
-            if sim.now - self.hid2tstamp[hid] > self.timeout:
-                del self.hid2tstamp[hid]
-                return hid
-            hid = (hid + 1) % self.maxhid
-        return hid
+        self.__contains__(0)  # remove timed-out entries
+        random.choice(self.shared_targets - self.hids)
 
     def set_unreach(self, hid):
-        self.hid2tstamp[hid] = sim.now
+        self.timeouts.append((sim.now, hid))
+        self.hids.add(hid)
 
     def set_bot(self, hid):
-        self.hid2tstamp[hid] = sim.now
+        self.timeouts.append((sim.now, hid))
+        self.hids.add(hid)
+
+    def __contains__(self, hid):
+        while sim.now - self.timestamps[0][0] > self.timeout:
+            tstamp, hid = self.timestamps.popleft()
+            self.hids.discard(hid)
+        return hid in self.hids
 
     def __str__(self):
         return 'LocalTimeoutCache maxhid %d timeout %f size %d' % (
@@ -75,7 +78,9 @@ class GlobalTimeoutCache(object):# {{{
         def __init__(self, config):
             assert len(config['botcache']['params']) == 1
             timeout = float(config['botcache']['params'][0])
-            self.cache = LocalTimeoutCache(timeout, config['maxhid'])
+            shared_targets = set(i for i in range(1, self.maxhid))
+            self.cache = LocalTimeoutCache(timeout, shared_targets)
         def __call__(self):
             return self.cache
 # }}}
+

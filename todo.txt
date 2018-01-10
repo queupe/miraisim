@@ -1,6 +1,9 @@
-* implement bot fork strategies
 * implement target selectors
 
 * implement plotting scripts
 * sanity check
+  * test with 1 bot (debug bot behavior)
+  * test with 1 host (debug host behavior)
+  * test with configuration where we know what will happen
+
 
