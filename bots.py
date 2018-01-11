@@ -1,7 +1,5 @@
-import heapq
 import logging
 
-import botcache
 import hosts
 
 import sim
@@ -17,7 +15,6 @@ def create_factory(config):
     return globals()[name].Factory(config)
 
 
-
 class FixedRateBot(object):# {{{
     class Factory(object):# {{{
         def __init__(self, config):
@@ -30,54 +27,64 @@ class FixedRateBot(object):# {{{
     def __init__(self, hid, rate):
         self.hid = int(hid)
         self.rate = float(rate)
-        self.cache = sim.botcache_factory()
+        self.targeting = sim.targeting_factory()
         self.status = STATUS_CREATED
 
     def start(self):
-        logging.debug('%.6f %s start', sim.now, self)
+        logging.debug('%s rate %f', self, self.rate)
         assert self.status == STATUS_CREATED
         self.status = STATUS_ACTIVE
-        self.attempt_auth(None)
+        ev = (sim.now, self.attempt_auth, None)
+        sim.enqueue(ev)
 
     def attempt_auth(self, _data):
         if self.status == STATUS_TEARDOWN:
-            logging.debug('%.6f %s attempt_auth teardown abort', sim.now, self)
+            logging.debug('%s teardown abort', self)
             return
-
         ev = (sim.now + 1/self.rate, self.attempt_auth, None)
         sim.enqueue(ev)
 
-        dsthid = self.cache.get_target()
-        host, status = sim.host_tracker.get(dsthid)
-        logging.debug('%.6f %s attempt_auth dst %d status %s',
-                      sim.now, self, dsthid, status)
+        dsthid = self.targeting.get_target()
+        _host, status = sim.host_tracker.get(dsthid)
+        logging.debug('%s dst %d status %s', self, dsthid, status)
 
-        if status == hosts.STATUS_SECURE:
-            self.cache.set_unreach(dsthid)
-        elif status == hosts.STATUS_SHUTDOWN:
-            self.cache.set_unreach(dsthid)
-        elif status == hosts.STATUS_INFECTED:
-            self.cache.set_unreach(dsthid)
-        elif status == hosts.STATUS_VULNERABLE:
+        if status in [hosts.STATUS_SECURE,
+                      hosts.STATUS_SHUTDOWN,
+                      hosts.STATUS_INFECTED]:
+            self.targeting.set_unreach(dsthid)
+        elif status in [hosts.STATUS_VULNERABLE]:
             delay = sim.e2e_latency.get_auth_delay((self.hid, dsthid))
+            # cunha @20180111.1335 not sure we need this FIXME
             # include infect delay:
-            delay += sim.e2e_latency.get_infect_delay((self.hid, dsthid))
-            ev = (sim.now + delay, self.attempt_infect, host)
+            # delay += sim.e2e_latency.get_infect_delay((self.hid, dsthid))
+            ev = (sim.now + delay, self.attempt_infect, dsthid)
             sim.enqueue(ev)
 
-    def attempt_infect(self, host):
+    def attempt_infect(self, hid):
         if self.status == STATUS_TEARDOWN:
-            logging.debug('%.6f %s attempt_infect teardown abort', sim.now, self)
+            logging.debug('%s teardown abort', self)
             return
-        self.cache.set_bot(host.hid)
-        host.infect()
-        logging.debug('%.6f %s attempt_infect dst %d', sim.now, self, host.hid)
+
+        host, status = sim.host_tracker.get(hid)
+        logging.debug('%s dst %d status %s', self, hid, status)
+
+        if hid in self.targeting:
+            logging.debug('%s dst %d in-cache abort', self, hid)
+        elif status in [hosts.STATUS_SECURE,
+                        hosts.STATUS_SHUTDOWN,
+                        hosts.STATUS_INFECTED]:
+            logging.debug('%s dst %d unreachable failure', self, hid)
+            self.targeting.set_unreach(hid)
+        elif status in [hosts.STATUS_VULNERABLE]:
+            logging.debug('%s dst %d infect success', self, hid)
+            self.targeting.set_bot(hid)
+            host.infect()
 
     def teardown(self):
         self.status = STATUS_TEARDOWN
 
     def __str__(self):
-        return 'Bot %d (%s)' % (self.hid, self.cache)
+        return 'Bot %d' % self.hid
 # }}}
 
 
@@ -90,14 +97,14 @@ class MultiThreadBot(object):# {{{
             return MultiThreadBot(hid, self.nthreads)
     # }}}
 
-    def __init__(self, hid, rate):
+    def __init__(self, hid, nthreads):
         self.hid = int(hid)
-        self.rate = float(rate)
-        self.cache = sim.botcache_factory()
+        self.nthreads = int(nthreads)
+        self.targeting = sim.targeting_factory()
         self.status = STATUS_CREATED
 
     def start(self):
-        logging.debug('%.6f %s start', sim.now, self)
+        logging.debug('%s nthreads %d', self, self.nthreads)
         assert self.status == STATUS_CREATED
         self.status = STATUS_ACTIVE
         for _i in range(self.nthreads):
@@ -106,43 +113,47 @@ class MultiThreadBot(object):# {{{
 
     def attempt_auth(self, _data):
         if self.status == STATUS_TEARDOWN:
-            logging.debug('%.6f %s attempt_auth teardown abort', sim.now, self)
+            logging.debug('%s teardown abort', self)
             return
-        dsthid = self.cache.get_target()
-        host, status = sim.host_tracker.get(dsthid)
-        logging.debug('%.6f %s attempt_auth dst %d status %s',
-                      sim.now, self, dsthid, status)
+
+        dsthid = self.targeting.get_target()
+        _host, status = sim.host_tracker.get(dsthid)
+        logging.debug('%s dst %d status %s', self, dsthid, status)
+
         delay = sim.e2e_latency.get_auth_delay((self.hid, dsthid))
         if status in [hosts.STATUS_SECURE,
                       hosts.STATUS_SHUTDOWN,
                       hosts.STATUS_INFECTED]:
-            self.cache.set_unreach(dsthid)
+            self.targeting.set_unreach(dsthid)
             ev = (sim.now + delay, self.attempt_auth, None)
             sim.enqueue(ev)
-        elif status == hosts.STATUS_VULNERABLE:
-            ev = (sim.now + delay, self.attempt_infect, host)
+        elif status in [hosts.STATUS_VULNERABLE]:
+            ev = (sim.now + delay, self.attempt_infect, dsthid)
             sim.enqueue(ev)
 
     def attempt_infect(self, hid):
         if self.status == STATUS_TEARDOWN:
-            logging.debug('%.6f %s attempt_infect teardown abort', sim.now, self)
+            logging.debug('%s teardown abort', self)
             return
+
         host, status = sim.host_tracker.get(hid)
-        logging.debug('%.6f %s attempt_infect dst %d status %s',
-                      sim.now, self, hid, status)
-        delay = -1
-        if hid in self.cache:
-            logging.debug('%.6f %s attempt_infect dst in cache')
+        logging.debug('%s dst %d status %s', self, hid, status)
+
+        if hid in self.targeting:
+            logging.debug('%s dst %d in-cache abort', self, hid)
             delay = 0
         elif status in [hosts.STATUS_SECURE,
                         hosts.STATUS_SHUTDOWN,
                         hosts.STATUS_INFECTED]:
-            self.cache.set_unreach(hid)
+            logging.debug('%s dst %d unreachable failure', self, hid)
+            self.targeting.set_unreach(hid)
             delay = sim.e2e_latency.get_auth_delay((self.hid, hid))
-        elif status == hosts.STATUS_VULNERABLE:
-            self.cache.set_bot(hid)
+        elif status in [hosts.STATUS_VULNERABLE]:
+            logging.debug('%s dst %d infect success', self, hid)
+            self.targeting.set_bot(hid)
             host.infect()
             delay = sim.e2e_latency.get_infect_delay((self.hid, hid))
+
         ev = (sim.now + delay, self.attempt_auth, None)
         sim.enqueue(ev)
 
@@ -150,5 +161,5 @@ class MultiThreadBot(object):# {{{
         self.status = STATUS_TEARDOWN
 
     def __str__(self):
-        return 'Bot %d (%s)' % (self.hid, self.cache)
+        return 'Bot %d' % self.hid
 # }}}

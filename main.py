@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import argparse
-import heapq
 import json
 import logging
 import random
@@ -10,6 +9,7 @@ import sys
 
 import bots
 import hosts
+import targeting
 
 import sim
 
@@ -77,8 +77,8 @@ def main():#{{{
     sim.e2e_latency = hosts.E2ELatency(sim.config)
     logging.info('%s', sim.e2e_latency)
 
-    sim.botcache_factory = botcache.create_factory(sim.config)
-    logging.info('%s', repr(sim.botcache_factory))
+    sim.targeting_factory = targeting.create_factory(sim.config)
+    logging.info('%s', sim.targeting_factory)
 
     if not bots.parse_scan_strat(sim.config):
         logging.fatal('Could not parse bot scanning strategy')

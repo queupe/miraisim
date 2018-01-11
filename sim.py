@@ -6,8 +6,11 @@ now = 0
 evqueue = list()
 evseq = 0
 
-create_bot_fn = None
-create_bot_cache_fn = None
+host_tracker = None
+e2e_latency = None
+bot_factory = None
+targeting_factory = None
+
 
 def compute_latency(srchid, dsthid):
     return 10.0
