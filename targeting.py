@@ -1,4 +1,3 @@
-import collections
 import logging
 import random
 
@@ -88,31 +87,32 @@ class CoordinatedTargeting(object):  # {{{
     def __init__(self, timeout, maxhid):
         self.timeout = float(timeout)
         self.maxhid = int(maxhid)
-        self.timestamps = collections.deque()
+        self.hid2tstamp = dict()
         self.targets = CoordinatedTargeting.TargetSet()
         for i in range(self.maxhid + 1):
             self.targets.add(i)
 
     def get_target(self):
-        self.__contains__(0)  # remove timed-out entries
-        return self.targets.choice()
+        target = self.targets.choice()
+        while target in self:
+            target = self.targets.choice()
+        return target
 
     def set_unreach(self, hid):
-        self.timestamps.append((sim.now, hid))
+        self.hid2tstamp[hid] = sim.now
         self.targets.remove(hid)
 
     def set_bot(self, hid):
-        self.timestamps.append((sim.now, hid))
+        self.hid2tstamp[hid] = sim.now
         self.targets.remove(hid)
 
     def __contains__(self, hid):
-        while (self.timestamps and
-               sim.now - self.timestamps[0][0] > self.timeout):
-            _tstamp, timed_out_hid = self.timestamps.popleft()
-            self.targets.add(timed_out_hid)
-        return hid not in self.targets
+        if sim.now - self.hid2tstamp.get(hid, sim.now) > self.timeout:
+            self.hid2tstamp.pop(hid)
+            self.targets.add(hid)
+        return hid in self.hid2tstamp
 
     def __str__(self):
-        return 'CoordinatedTargeting maxhid %d timeout %f cachesize %d' % (
-                self.maxhid, self.timeout, len(self.timestamps))
+        return 'CoordinatedTargeting maxhid %d timeout %f cachesize %d' % \
+            (self.maxhid, self.timeout, len(self.hid2tstamp))
 # }}}
