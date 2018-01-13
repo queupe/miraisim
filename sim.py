@@ -12,6 +12,7 @@ now = 0
 evqueue = list()
 evseq = 0
 
+
 def enqueue(ev):
     # Assumes ev = (time, fn, fndata)
     assert ev[0] >= now

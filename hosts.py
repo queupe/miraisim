@@ -11,7 +11,7 @@ STATUS_INFECTED = 'host_status_infected'
 
 # We only create hosts for vulnerable and infected (online) devices.
 # Secure and shut-down devices are handled without in-memory objects.
-class Host(object):# {{{
+class Host(object):  # {{{
     @staticmethod
     def bootup(hid):
         logging.debug('hid %d', hid)
@@ -54,7 +54,7 @@ class Host(object):# {{{
 # }}}
 
 
-class HostTracker(object):# {{{
+class HostTracker(object):  # {{{
     def __init__(self, config):
         frac_vulnerable = float(config['frac_vulnerable'])
         self.vulnerable_period = int(1.0/frac_vulnerable)
@@ -84,7 +84,7 @@ class HostTracker(object):# {{{
 # }}}
 
 
-class E2ELatency(object):# {{{
+class E2ELatency(object):  # {{{
     def __init__(self, config):
         self.min = float(config['e2e_latency']['min'])
         self.max = float(config['e2e_latency']['max'])
@@ -92,6 +92,7 @@ class E2ELatency(object):# {{{
         self.timeout = float(config['e2e_latency']['timeout'])
 
     def get(self, srchid, dsthid):
+        assert srchid != dsthid
         h = hash((srchid, dsthid))
         scale = h/sys.maxsize
         latency = scale*(self.max - self.min) + self.min

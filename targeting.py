@@ -14,11 +14,12 @@ def create_factory(config):
     return globals()[name].Factory(config)
 
 
-class RandomTargeting(object):# {{{
-    class Factory(object):# {{{
+class RandomTargeting(object):  # {{{
+    class Factory(object):  # {{{
         def __init__(self, config):
             assert len(config['targeting']['params']) == 0
             self.maxhid = int(config['maxhid'])
+
         def __call__(self):
             return RandomTargeting(self.maxhid)
     # }}}
@@ -43,25 +44,29 @@ class RandomTargeting(object):# {{{
 # }}}
 
 
-class CoordinatedTargeting(object):# {{{
-    class Factory(object):# {{{
+class CoordinatedTargeting(object):  # {{{
+    class Factory(object):  # {{{
         def __init__(self, config):
             assert len(config['targeting']['params']) == 1
             timeout = float(config['targeting']['params'][0])
             maxhid = int(config['maxhid'])
             self.unique = CoordinatedTargeting(timeout, maxhid)
+
         def __call__(self):
             return self.unique
     # }}}
-    class TargetSet(object):# {{{
+
+    class TargetSet(object):  # {{{
         def __init__(self):
             self.hid2pos = dict()
             self.hids = list()
+
         def add(self, hid):
             logging.debug('hid %d', hid)
             if hid not in self.hid2pos:
                 self.hid2pos[hid] = len(self.hids)
                 self.hids.append(hid)
+
         def remove(self, hid):
             logging.debug('hid %d', hid)
             if hid in self.hid2pos:
@@ -70,9 +75,13 @@ class CoordinatedTargeting(object):# {{{
                 if hid != last:  # pos != len(self.hids)
                     self.hids[pos] = last
                     self.hid2pos[last] = pos
+
         def choice(self): return random.choice(self.hids)
+
         def __contains__(self, hid): return hid in self.hid2pos
+
         def __len__(self): return len(self.hids)
+
         def __str__(self): return 'TargetSet size %d' % len(self.hids)
     # }}}
 

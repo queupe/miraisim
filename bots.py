@@ -19,7 +19,7 @@ def create_factory(config):
     return globals()[name].Factory(config)
 
 
-class FixedRateMixin(object):# {{{
+class FixedRateMixin(object):  # {{{
     def __init__(self, rate):
         self.rate = float(rate)
 
@@ -44,7 +44,7 @@ class FixedRateMixin(object):# {{{
 # }}}
 
 
-class MultithreadMixin(object):# {{{
+class MultithreadMixin(object):  # {{{
     def __init__(self, nthreads):
         self.nthreads = int(nthreads)
 
@@ -71,7 +71,7 @@ class MultithreadMixin(object):# {{{
 # }}}
 
 
-class BotMixin(object):# {{{
+class BotMixin(object):  # {{{
     def __init__(self):
         self.targeting = sim.targeting_factory()  # pylint: disable=not-callable
         self.status = STATUS_CREATED
@@ -140,11 +140,12 @@ class BotMixin(object):# {{{
 # }}}
 
 
-class FixedRateBot(BotMixin, FixedRateMixin):# {{{
-    class Factory(object):# {{{
+class FixedRateBot(BotMixin, FixedRateMixin):  # {{{
+    class Factory(object):  # {{{
         def __init__(self, config):
             assert len(config['bot']['params']) == 1
             self.rate = float(config['bot']['params'][0])
+
         def __call__(self, hid):
             return FixedRateBot(hid, self.rate)
     # }}}
@@ -157,11 +158,12 @@ class FixedRateBot(BotMixin, FixedRateMixin):# {{{
 # }}}
 
 
-class MultithreadBot(BotMixin, MultithreadMixin):# {{{
-    class Factory(object):# {{{
+class MultithreadBot(BotMixin, MultithreadMixin):  # {{{
+    class Factory(object):  # {{{
         def __init__(self, config):
             assert len(config['bot']['params']) == 1
             self.nthreads = float(config['bot']['params'][0])
+
         def __call__(self, hid):
             return MultithreadBot(hid, self.nthreads)
     # }}}

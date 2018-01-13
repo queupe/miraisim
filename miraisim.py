@@ -18,24 +18,24 @@ DIST_EXPONENTIAL = 'Exponential'
 DIST_UNIFORM = 'Uniform'
 
 
-def create_parser(): # {{{
+def create_parser():  # {{{
     desc = '''Botnet simulator'''
 
     parser = argparse.ArgumentParser(description=desc)
 
     parser.add_argument('--config-json',
-            dest='configfn',
-            action='store',
-            metavar='FILE',
-            type=str,
-            required=True,
-            help='JSON file containing simulation configuration')
+                        dest='configfn',
+                        action='store',
+                        metavar='FILE',
+                        type=str,
+                        required=True,
+                        help='JSON file containing simulation configuration')
 
     return parser
 # }}}
 
 
-def parse_dist(distcfg, name):# {{{
+def parse_dist(distcfg, name):  # {{{
     logging.debug('  %s: %s', name, json.dumps(distcfg))
     if distcfg['dist'] == DIST_EXPONENTIAL:
         assert len(distcfg['params']) == 1
@@ -53,7 +53,7 @@ def parse_dist(distcfg, name):# {{{
 # }}}
 
 
-def main():#{{{
+def main():  # {{{
     resource.setrlimit(resource.RLIMIT_AS, (1 << 31, 1 << 31))
     resource.setrlimit(resource.RLIMIT_FSIZE, (1 << 35, 1 << 35))
 
@@ -67,8 +67,10 @@ def main():#{{{
                         level=logging.NOTSET)
     logging.info('%s', json.dumps(sim.config))
 
-    sim.dist_host_on_time = parse_dist(sim.config['dists']['host_on_time'], 'on-time')
-    sim.dist_host_off_time = parse_dist(sim.config['dists']['host_off_time'], 'off-time')
+    sim.dist_host_on_time = parse_dist(sim.config['dists']['host_on_time'],
+                                       'on-time')
+    sim.dist_host_off_time = parse_dist(sim.config['dists']['host_off_time'],
+                                        'off-time')
     logging.info('initialized on/off time distributions')
 
     sim.targeting_factory = targeting.create_factory(sim.config)
@@ -104,7 +106,7 @@ def main():#{{{
         _now, fn, data = sim.dequeue()
         logging.debug('dequeue len %d', len(sim.evqueue))
         fn(data)
-#}}}
+# }}}
 
 
 if __name__ == '__main__':
