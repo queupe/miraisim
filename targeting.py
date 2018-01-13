@@ -1,9 +1,16 @@
 import collections
+import logging
 import random
+
+import sim
 
 
 def create_factory(config):
     name = config['targeting']['class']
+    if name not in globals():
+        msg = 'unknown bot targeting strategy (%s)' % name
+        logging.fatal(msg)
+        raise ValueError(msg)
     return globals()[name].Factory(config)
 
 
@@ -48,13 +55,15 @@ class CoordinatedTargeting(object):# {{{
     # }}}
     class TargetSet(object):# {{{
         def __init__(self):
-            self.hid2pos = dist()
+            self.hid2pos = dict()
             self.hids = list()
         def add(self, hid):
+            logging.debug('hid %d', hid)
             if hid not in self.hid2pos:
                 self.hid2pos[hid] = len(self.hids)
                 self.hids.append(hid)
         def remove(self, hid):
+            logging.debug('hid %d', hid)
             if hid in self.hid2pos:
                 pos = self.hid2pos.pop(hid)
                 last = self.hids.pop()
@@ -69,9 +78,10 @@ class CoordinatedTargeting(object):# {{{
 
     def __init__(self, timeout, maxhid):
         self.timeout = float(timeout)
+        self.maxhid = int(maxhid)
         self.timestamps = collections.deque()
-        self.targets = TargetSet()
-        for i in range(maxhid+1):
+        self.targets = CoordinatedTargeting.TargetSet()
+        for i in range(self.maxhid + 1):
             self.targets.add(i)
 
     def get_target(self):
@@ -79,11 +89,11 @@ class CoordinatedTargeting(object):# {{{
         return self.targets.choice()
 
     def set_unreach(self, hid):
-        self.timeouts.append((sim.now, hid))
+        self.timestamps.append((sim.now, hid))
         self.targets.remove(hid)
 
     def set_bot(self, hid):
-        self.timeouts.append((sim.now, hid))
+        self.timestamps.append((sim.now, hid))
         self.targets.remove(hid)
 
     def __contains__(self, hid):
@@ -94,7 +104,6 @@ class CoordinatedTargeting(object):# {{{
         return hid not in self.targets
 
     def __str__(self):
-        return 'CoordinatedTargeting maxhid %d timeout %f (%s)' % (
-                self.maxhid, self.timeout, self.targets)
+        return 'CoordinatedTargeting maxhid %d timeout %f cachesize %d' % (
+                self.maxhid, self.timeout, len(self.timestamps))
 # }}}
-

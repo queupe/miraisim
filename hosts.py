@@ -1,4 +1,3 @@
-import heapq
 import logging
 import sys
 
@@ -15,7 +14,7 @@ STATUS_INFECTED = 'host_status_infected'
 class Host(object):# {{{
     @staticmethod
     def bootup(hid):
-        logging.debug('%.6f bootup hid %d', sim.now, hid)
+        logging.debug('hid %d', hid)
         host = Host(hid, STATUS_VULNERABLE)
         sim.host_tracker.add(host)
         ev = (sim.now + host.on_time, host.shutdown, None)
@@ -24,7 +23,9 @@ class Host(object):# {{{
     def __init__(self, hid, status):
         self.hid = hid
         self.status = status
-        self.on_time = sim.dist_host_on_time()
+        self.on_time = sim.dist_host_on_time()  # pylint: disable=not-callable
+        self.infection_time = None
+        self.bot = None
 
     def infect(self):
         logging.debug('%.6f Host.infect hid %d', sim.now, self.hid)
@@ -35,7 +36,7 @@ class Host(object):# {{{
         else:
             self.status = STATUS_INFECTED
             self.infection_time = sim.now
-            self.bot = sim.create_bot_fn(self.hid)
+            self.bot = sim.bot_factory(self.hid)  # pylint: disable=not-callable
             self.bot.start()
             return True
 
@@ -46,7 +47,7 @@ class Host(object):# {{{
             infection = self.infection_time
         logging.info('%.6f Host.shutdown hid %d infected %f', sim.now,
                      self.hid, (sim.now - infection)/self.on_time)
-        off_time = sim.dist_host_off_time()
+        off_time = sim.dist_host_off_time()  # pylint: disable=not-callable
         ev = (sim.now + off_time, Host.bootup, self.hid)
         sim.enqueue(ev)
         sim.host_tracker.delete(self)

@@ -67,9 +67,15 @@ def main():#{{{
                         level=logging.NOTSET)
     logging.info('%s', json.dumps(sim.config))
 
-    logging.info('initializing distributions:')
     sim.dist_host_on_time = parse_dist(sim.config['dists']['host_on_time'], 'on-time')
     sim.dist_host_off_time = parse_dist(sim.config['dists']['host_off_time'], 'off-time')
+    logging.info('initialized on/off time distributions')
+
+    sim.targeting_factory = targeting.create_factory(sim.config)
+    logging.info('%s', sim.targeting_factory)
+
+    sim.bot_factory = bots.create_factory(sim.config)
+    logging.info('%s', sim.bot_factory)
 
     sim.host_tracker = hosts.HostTracker(sim.config)
     logging.info('%s', sim.host_tracker)
@@ -77,32 +83,26 @@ def main():#{{{
     sim.e2e_latency = hosts.E2ELatency(sim.config)
     logging.info('%s', sim.e2e_latency)
 
-    sim.targeting_factory = targeting.create_factory(sim.config)
-    logging.info('%s', sim.targeting_factory)
+    master = hosts.Host(0, hosts.STATUS_VULNERABLE)
+    master.on_time = 1e100
+    master.infect()
+    sim.host_tracker.add(master)
+    logging.info('initialized master bot')
 
-    if not bots.parse_scan_strat(sim.config):
-        logging.fatal('Could not parse bot scanning strategy')
-        logging.fatal('scan_strat %s', sim.config['scan_strat'])
-        sys.exit(1)
-    logging.info('Bot scanning strategy: %s', sim.config['scan_strat'])
-
-    for hid in range(sim.hosttracker.vulnerable_period,
+    for hid in range(sim.host_tracker.vulnerable_period,
                      sim.config['maxhid'] + 1,
-                     sim.hosttracker.vulnerable_period):
+                     sim.host_tracker.vulnerable_period):
         off_time = sim.dist_host_off_time()
         ev = (sim.now + off_time, hosts.Host.bootup, hid)
         sim.enqueue(ev)
-    logging.info('Created %d bootup events', len(sim.evqueue))
-    assert len(sim.evqueue) == sim.config['maxhid']//sim.hosttracker.vulnerable_period
+    logging.info('created %d bootup events', len(sim.evqueue))
 
-    logging.info('Initializing master bot')
-    master = hosts.Host(0, hosts.STATUS_VULNERABLE)
-    master.infect()
-    sim.hosttracker.add(master)
+    assert len(sim.evqueue) == (sim.config['maxhid'] //
+                                sim.host_tracker.vulnerable_period)
 
     while sim.evqueue and sim.now < sim.config['endtime']:
-        now, fn, data = sim.dequeue()
-        logging.debug('%.6f dequeue len %d', sim.now, len(sim.evqueue))
+        _now, fn, data = sim.dequeue()
+        logging.debug('dequeue len %d', len(sim.evqueue))
         fn(data)
 #}}}
 

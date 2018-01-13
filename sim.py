@@ -1,19 +1,16 @@
 import heapq
 
-config = None
-
-now = 0
-evqueue = list()
-evseq = 0
-
+config = dict()
 host_tracker = None
 e2e_latency = None
 bot_factory = None
 targeting_factory = None
+dist_host_on_time = None
+dist_host_off_time = None
 
-
-def compute_latency(srchid, dsthid):
-    return 10.0
+now = 0
+evqueue = list()
+evseq = 0
 
 def enqueue(ev):
     # Assumes ev = (time, fn, fndata)
@@ -21,6 +18,7 @@ def enqueue(ev):
     global evseq
     heapq.heappush(evqueue, (ev[0], evseq, ev[1], ev[2]))
     evseq += 1
+
 
 def dequeue():
     global now
