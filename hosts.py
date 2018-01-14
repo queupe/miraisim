@@ -14,8 +14,8 @@ STATUS_INFECTED = 'host_status_infected'
 class Host(object):  # {{{
     @staticmethod
     def bootup(hid):
-        logging.debug('hid %d', hid)
         host = Host(hid, STATUS_VULNERABLE)
+        logging.info('hid %d on_time %f', hid, host.on_time)
         sim.host_tracker.add(host)
         ev = (sim.now + host.on_time, host.shutdown, None)
         sim.enqueue(ev)
@@ -28,7 +28,7 @@ class Host(object):  # {{{
         self.bot = None
 
     def infect(self):
-        logging.debug('%.6f Host.infect hid %d', sim.now, self.hid)
+        logging.debug('hid %d', self.hid)
         assert self.status != STATUS_SECURE
         assert self.status != STATUS_SHUTDOWN
         if self.status == STATUS_INFECTED:
@@ -45,8 +45,8 @@ class Host(object):  # {{{
         if self.status == STATUS_INFECTED:
             self.bot.teardown()
             infection = self.infection_time
-        logging.info('%.6f Host.shutdown hid %d infected %f', sim.now,
-                     self.hid, (sim.now - infection)/self.on_time)
+        logging.info('hid %d infected %f', self.hid,
+                     (sim.now - infection)/self.on_time)
         off_time = sim.dist_host_off_time()  # pylint: disable=not-callable
         ev = (sim.now + off_time, Host.bootup, self.hid)
         sim.enqueue(ev)
@@ -92,8 +92,9 @@ class E2ELatency(object):  # {{{
         self.timeout = float(config['e2e_latency']['timeout'])
 
     def get(self, srchid, dsthid):
-        assert srchid != dsthid
-        h = hash((srchid, dsthid))
+        if srchid == dsthid:
+            return self.min
+        h = abs(hash('%d.%d' % (srchid, dsthid)))
         scale = h/sys.maxsize
         latency = scale*(self.max - self.min) + self.min
         logging.debug('E2ELatency src %d dst %d scale %f lat %f',

@@ -1,15 +1,16 @@
 {
   "logfile": "log.txt",
+  "loglevel": "INFO",
   "endtime": 100000,
-  "maxhid": 10000,
-  "frac_vulnerable": 0.01,
+  "maxhid": 1000,
+  "frac_vulnerable": 0.5,
   "bot": {
     "class": "FixedRateBot",
-    "params": [10.0],
+    "params": [10.0]
   },
-  "botcache": {
-    "class": "NullCache",
-    "params": []
+  "targeting": {
+    "class": "CoordinatedTargeting",
+    "params": [10.0]
   },
   "e2e_latency": {
     "min": 0.010,
@@ -21,11 +22,11 @@
   "dists": {
     "host_on_time": {
       "dist": "Exponential",
-      "params": [3600.0]
+      "params": [43200.0]
     },
     "host_off_time": {
       "dist": "Exponential",
-      "params": [3600.0]
+      "params": [600.0]
     }
   }
 }

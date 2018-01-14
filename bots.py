@@ -24,7 +24,6 @@ class FixedRateMixin(object):  # {{{
         self.rate = float(rate)
 
     def start(self):
-        super().start()
         ev = (sim.now, self.attempt_auth, None)
         sim.enqueue(ev)
 
@@ -49,7 +48,6 @@ class MultithreadMixin(object):  # {{{
         self.nthreads = int(nthreads)
 
     def start(self):
-        super().start()
         for _i in range(self.nthreads):
             ev = (sim.now, self.attempt_auth, None)
             sim.enqueue(ev)
@@ -93,17 +91,17 @@ class BotMixin(object):  # {{{
         _host, status = sim.host_tracker.get(dsthid)
         logging.debug('%s dst %d status %s', self, dsthid, status)
 
-        delay = sim.e2e_latency.get_auth_delay((self.hid, dsthid))
+        delay = sim.e2e_latency.get_auth_delay(self.hid, dsthid)
         if status in [hosts.STATUS_SECURE,
                       hosts.STATUS_SHUTDOWN,
                       hosts.STATUS_INFECTED]:
             self.targeting.set_unreach(dsthid)
-            self.probing.attempt_auth_failure(delay)
+            self.attempt_auth_failure(delay)
         elif status in [hosts.STATUS_VULNERABLE]:
             # cunha @20180111.1335 not sure we need this FIXME
             # include infect delay:
-            # delay += sim.e2e_latency.get_infect_delay((self.hid, dsthid))
-            self.probing.attempt_auth_success(delay, dsthid)
+            # delay += sim.e2e_latency.get_infect_delay(self.hid, dsthid)
+            self.attempt_auth_success(delay, dsthid)
 
     def attempt_infect(self, hid):
         logging.debug('%s entering', self)
@@ -122,12 +120,12 @@ class BotMixin(object):  # {{{
                         hosts.STATUS_INFECTED]:
             logging.debug('%s dst %d unreachable failure', self, hid)
             self.targeting.set_unreach(hid)
-            delay = sim.e2e_latency.get_auth_delay((self.hid, hid))
+            delay = sim.e2e_latency.get_auth_delay(self.hid, hid)
         elif status in [hosts.STATUS_VULNERABLE]:
-            logging.debug('%s dst %d infect success', self, hid)
+            logging.info('%s dst %d infect success', self, hid)
             self.targeting.set_bot(hid)
             host.infect()
-            delay = sim.e2e_latency.get_infect_delay((self.hid, hid))
+            delay = sim.e2e_latency.get_infect_delay(self.hid, hid)
 
         self.attempt_infect_end(delay)
 
@@ -151,8 +149,8 @@ class FixedRateBot(BotMixin, FixedRateMixin):  # {{{
     # }}}
 
     def __init__(self, hid, rate):
-        BotMixin.__init__()
-        FixedRateMixin.__init__(rate)
+        BotMixin.__init__(self)
+        FixedRateMixin.__init__(self, rate)
         self.hid = int(hid)
         logging.debug('%s rate %f', self, self.rate)
 # }}}
@@ -169,8 +167,8 @@ class MultithreadBot(BotMixin, MultithreadMixin):  # {{{
     # }}}
 
     def __init__(self, hid, nthreads):
-        BotMixin.__init__()
-        MultithreadMixin.__init__(nthreads)
+        BotMixin.__init__(self)
+        MultithreadMixin.__init__(self, nthreads)
         self.hid = int(hid)
         logging.debug('%s nthreads %d', self, self.nthreads)
 # }}}

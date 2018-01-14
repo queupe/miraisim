@@ -93,6 +93,8 @@ class CoordinatedTargeting(object):  # {{{
             self.targets.add(i)
 
     def get_target(self):
+        if not self.targets.hids:
+            return random.randint(0, self.maxhid)
         target = self.targets.choice()
         while target in self:
             target = self.targets.choice()

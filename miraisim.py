@@ -36,7 +36,7 @@ def create_parser():  # {{{
 
 
 def parse_dist(distcfg, name):  # {{{
-    logging.debug('  %s: %s', name, json.dumps(distcfg))
+    logging.info('%s: %s', name, json.dumps(distcfg))
     if distcfg['dist'] == DIST_EXPONENTIAL:
         assert len(distcfg['params']) == 1
         fn = lambda: random.expovariate(1/float(distcfg['params'][0]))
@@ -53,6 +53,13 @@ def parse_dist(distcfg, name):  # {{{
 # }}}
 
 
+class SimulationTimeFilter(logging.Filter):  # {{{
+    def filter(self, record):
+        record.TIME = sim.now
+        return True
+# }}}
+
+
 def main():  # {{{
     resource.setrlimit(resource.RLIMIT_AS, (1 << 31, 1 << 31))
     resource.setrlimit(resource.RLIMIT_FSIZE, (1 << 35, 1 << 35))
@@ -63,8 +70,12 @@ def main():  # {{{
         sim.config = json.load(fd)
 
     logfile = sim.config.get('logfile', 'log.txt')
-    logging.basicConfig(filename=logfile, format='%(message)s',
-                        level=logging.NOTSET)
+    loglevel = getattr(logging, sim.config.get('loglevel', 'DEBUG'))
+    logging.basicConfig(filename=logfile,
+                        format='%(TIME)f %(filename)s:%(lineno)d/%(funcName)s %(message)s',
+                        level=loglevel)
+    logger = logging.getLogger()
+    logger.addFilter(SimulationTimeFilter())
     logging.info('%s', json.dumps(sim.config))
 
     sim.dist_host_on_time = parse_dist(sim.config['dists']['host_on_time'],
@@ -100,7 +111,7 @@ def main():  # {{{
     logging.info('created %d bootup events', len(sim.evqueue))
 
     assert len(sim.evqueue) == (sim.config['maxhid'] //
-                                sim.host_tracker.vulnerable_period)
+                                sim.host_tracker.vulnerable_period) + 1
 
     while sim.evqueue and sim.now < sim.config['endtime']:
         _now, fn, data = sim.dequeue()
