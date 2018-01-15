@@ -1,3 +1,6 @@
+* BUG: devices that are SECURE or SHUTDOWN should have a delay of
+* E2ELatency.timeout instead of auth_delay
+
 * implement plotting scripts
 
 * plot results:

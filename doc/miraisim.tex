@@ -9,13 +9,13 @@ padrões de comportamento.
 \subsection{Configuração da rede e dispositivos}
 
 Nosso simulador permite a configuração da rede e dos dispositivos
-dos parâmetros mostrados na tabela~\ref{tab:sim.params}.  Em
+através dos parâmetros mostrados na tabela~\ref{tab:sim.params}.  Em
 particular, o simulador permite execução de redes com diferentes
 quantidades $N_v$ e $N_s$ de dispositivos vulneráveis
-e invulneráveis, i.e., que podem e não podem ser infectados pelo
+e seguros, i.e., que podem e não podem ser infectados pelo
 \emph{malware}.  Também é possível configurar a quantidade $N_m$ de
 dispositivos que executam o \emph{malware} continuamente.  Os
-dispositivos vulneráveis e invulneráveis poder ser desligados
+dispositivos vulneráveis e seguros poder ser desligados
 e religados.  A duração dos períodos nos quais os dispositivos
 permanecem ligados e desligados é escolhida aleatoriamente segundo
 distribuições estatísticas, $D_\textrm{on}$ e $D_\textrm{off}$.
@@ -92,22 +92,22 @@ processos de sondagem:
 		\emph{threads} que executam uma tentativa de
 		autenticação e, em caso de sucesso, uma tentativa de
 		infecção.  Após as tentativas de autenticação
-		e infecção, a \emph{thread} escolhe um novo alvo
-		e repete o processo.
+		e infecção, \emph{threads} escolhem novo alvo
+		e repetem o processo.
 %
-	\item[FixedForkingThreads] No processo FixedForkingThreads,
-		o \emph{malware} executa uma quantidade fixa de
-		\emph{threads} que executam uma tentativa de
-		autenticação e, em caso de sucesso, disparam uma
-		nova \emph{thread}$^\prime$ independente para
-		executar a tentativa de infecção.  Após a tentativa
-		de autenticação, a \emph{thread} escolhe novo alvo
-		e repete o processo.
+%	\item[FixedForkingThreads] No processo FixedForkingThreads,
+%		o \emph{malware} executa uma quantidade fixa de
+%		\emph{threads} que executam uma tentativa de
+%		autenticação e, em caso de sucesso, disparam uma
+%		nova \emph{thread}$^\prime$ independente para
+%		executar a tentativa de infecção.  Após a tentativa
+%		de autenticação, a \emph{thread} escolhe novo alvo
+%		e repete o processo.
 %
 \end{description}
 
 Tentativas de autenticação podem falhar por que o dispositivo alvo
-é invulnerável ou por que já foi infectado.  Em ambos os caso,
+é seguro ou por que já foi infectado.  Em ambos os casos,
 o dispositivo alvo não responde à tentativa de autenticação, que
 falha depois de $l_\mathrm{tout}$ segundos.  Tentativas de infecção
 podem falhar por que o dispositivo vulnerável foi infectado por
@@ -121,20 +121,19 @@ para geração de alvos:
 
 \begin{description}
 %
-	\item[NoCache] No mecanismo NoCache, alvos são selecionados
-		aleatoriamente entre todos os dispositivos.
+	\item[NoCache] Alvos são selecionados aleatoriamente entre
+		todos os dispositivos.
 %
-	\item[LocalCache] No mecanismo LocalCache, o \emph{malware}
-		mantém uma lista de dispositivos sondados
-		anteriormente onde tentativas de autenticação ou
-		infecção falharam.  Dispositivos são removidos da
-		lista após um período configurável para permitir
-		reinfecção de dispositivos religados.  Alvos que não
-		estão na lista são selecionados aleatoriamente.
-%
-	\item[GlobalCache] Similar ao mecanismo LocalCache, mas os
-		\emph{malwares} compartilham informação sobre quais
-		dispositivos sondaram.
+	\item[GlobalCache] Os dispositivos infectados com
+		o \emph{malware} mantém uma lista compartilhada
+		contendo os dispositivos infectados bem como os
+		dispositivos sondados anteriormente onde tentativas
+		de autenticação ou infecção falharam.  Dispositivos
+		são removidos da lista após um período
+		(\emph{timeout}) configurável para permitir
+		reinfecção de dispositivos religados.  Dispositivos
+		que não estão no lista são selecionados como alvos
+		aleatoriamente.
 %
 \end{description}
 
