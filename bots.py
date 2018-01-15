@@ -91,16 +91,17 @@ class BotMixin(object):  # {{{
         _host, status = sim.host_tracker.get(dsthid)
         logging.debug('%s dst %d status %s', self, dsthid, status)
 
-        delay = sim.e2e_latency.get_auth_delay(self.hid, dsthid)
         if status in [hosts.STATUS_SECURE,
                       hosts.STATUS_SHUTDOWN,
                       hosts.STATUS_INFECTED]:
+            delay = sim.e2e_latency.get_timeout()
             self.targeting.set_unreach(dsthid)
             self.attempt_auth_failure(delay)
         elif status in [hosts.STATUS_VULNERABLE]:
             # cunha @20180111.1335 not sure we need this FIXME
             # include infect delay:
             # delay += sim.e2e_latency.get_infect_delay(self.hid, dsthid)
+            delay = sim.e2e_latency.get_auth_delay(self.hid, dsthid)
             self.attempt_auth_success(delay, dsthid)
 
     def attempt_infect(self, hid):
@@ -120,7 +121,7 @@ class BotMixin(object):  # {{{
                         hosts.STATUS_INFECTED]:
             logging.debug('%s dst %d unreachable failure', self, hid)
             self.targeting.set_unreach(hid)
-            delay = sim.e2e_latency.get_auth_delay(self.hid, hid)
+            delay = sim.e2e_latency.get_timeout()
         elif status in [hosts.STATUS_VULNERABLE]:
             logging.info('%s dst %d infect success', self, hid)
             self.targeting.set_bot(hid)
