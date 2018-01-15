@@ -45,7 +45,7 @@ class Host(object):  # {{{
         if self.status == STATUS_INFECTED:
             self.bot.teardown()
             infection = self.infection_time
-        logging.info('hid %d infected %f', self.hid,
+        logging.info('hid %d on_time %f infected %f', self.hid, self.on_time,
                      (sim.now - infection)/self.on_time)
         off_time = sim.dist_host_off_time()  # pylint: disable=not-callable
         ev = (sim.now + off_time, Host.bootup, self.hid)

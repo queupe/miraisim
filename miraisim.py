@@ -61,7 +61,7 @@ class SimulationTimeFilter(logging.Filter):  # {{{
 
 
 def main():  # {{{
-    resource.setrlimit(resource.RLIMIT_AS, (1 << 31, 1 << 31))
+    resource.setrlimit(resource.RLIMIT_AS, (1 << 32, 1 << 32))
     resource.setrlimit(resource.RLIMIT_FSIZE, (1 << 35, 1 << 35))
 
     parser = create_parser()

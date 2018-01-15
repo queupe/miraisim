@@ -1,0 +1,32 @@
+{
+  "logfile": "test-average.log.txt",
+  "loglevel": "INFO",
+  "endtime": 100000,
+  "maxhid": 10000,
+  "frac_vulnerable": 0.1,
+  "bot": {
+    "class": "FixedRateBot",
+    "params": [0.1]
+  },
+  "targeting": {
+    "class": "CoordinatedTargeting",
+    "params": [600.0]
+  },
+  "e2e_latency": {
+    "min": 0.010,
+    "max": 0.400,
+    "timeout": 2.0
+  },
+  "nrtts_auth": 7,
+  "nrtts_infect": 70,
+  "dists": {
+    "host_on_time": {
+      "dist": "Exponential",
+      "params": [3600.0]
+    },
+    "host_off_time": {
+      "dist": "Exponential",
+      "params": [600.0]
+    }
+  }
+}

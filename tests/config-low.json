@@ -1,20 +1,20 @@
 {
-  "logfile": "log.txt",
+  "logfile": "test-low.log.txt",
   "loglevel": "INFO",
   "endtime": 100000,
-  "maxhid": 1000,
-  "frac_vulnerable": 0.5,
+  "maxhid": 10000,
+  "frac_vulnerable": 0.1,
   "bot": {
     "class": "FixedRateBot",
-    "params": [10.0]
+    "params": [0.01]
   },
   "targeting": {
     "class": "CoordinatedTargeting",
-    "params": [10.0]
+    "params": [600.0]
   },
   "e2e_latency": {
     "min": 0.010,
-    "max": 0.050,
+    "max": 0.400,
     "timeout": 2.0
   },
   "nrtts_auth": 7,
@@ -22,7 +22,7 @@
   "dists": {
     "host_on_time": {
       "dist": "Exponential",
-      "params": [43200.0]
+      "params": [600.0]
     },
     "host_off_time": {
       "dist": "Exponential",

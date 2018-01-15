@@ -1,9 +1,20 @@
-* implement target selectors
-
 * implement plotting scripts
-* sanity check
-  * test with 1 bot (debug bot behavior)
-  * test with 1 host (debug host behavior)
-  * test with configuration where we know what will happen
+
+* plot results:
+  * 4 groups:
+    * RandomTargeting/FixedRate
+    * RandomTargeting/Multithreaded
+    * Coordinated/Fixed
+    * Coordinated/Multithreaded
+  * Check if network size has impact:
+    * # hosts in [100, 1000, 10000, 100000]
+    * frac vulnerable in [0.1, 0.25, 0.5, 0.75]
+      * goal: hosts have no impact, but frac vulnerable does
+  * Latency
+    * compare ridiculously high latency vs ridiculously low latency
+    * larger impact for multithreaded, but even then should be small
+  * vary on-time and off-time
+    * distribution
+    * average in [600, 3600, 7200, 43200]
 
 
