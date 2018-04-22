@@ -205,9 +205,6 @@ class TestCoordinatedTargeting(TestCase):  # {{{
             rnd.set_unreach(i)
             self.assertTrue(i in rnd)
         target = rnd.get_target()
-
-
-        
 # }}}
 
 

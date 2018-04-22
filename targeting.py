@@ -16,7 +16,7 @@ def create_factory(config):
 class RandomTargeting(object):  # {{{
     class Factory(object):  # {{{
         def __init__(self, config):
-            assert len(config['targeting']['params']) == 0
+            assert not config['targeting']['params']
             self.maxhid = int(config['maxhid'])
 
         def __call__(self):

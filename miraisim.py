@@ -110,8 +110,8 @@ def main():  # {{{
         sim.enqueue(ev)
     logging.info('created %d bootup events', len(sim.evqueue))
 
-    assert len(sim.evqueue) == (sim.config['maxhid'] //
-                                sim.host_tracker.vulnerable_period) + 1
+    assert (len(sim.evqueue) ==
+            (sim.config['maxhid'] // sim.host_tracker.vulnerable_period) + 1)
 
     while sim.evqueue and sim.now < sim.config['endtime']:
         _now, fn, data = sim.dequeue()
