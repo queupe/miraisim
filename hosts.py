@@ -8,7 +8,7 @@ STATUS_SECURE = 'host_status_secure'
 STATUS_VULNERABLE = 'host_status_vulnerable'
 STATUS_INFECTED = 'host_status_infected'
 
-
+# Testing new branch
 # We only create hosts for vulnerable and infected (online) devices.
 # Secure and shut-down devices are handled without in-memory objects.
 class Host(object):  # {{{
