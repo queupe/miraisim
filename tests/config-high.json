@@ -6,7 +6,8 @@
   "frac_vulnerable": 0.1,
   "bot": {
     "class": "FixedRateBot",
-    "params": [1.0]
+    "params": [1.0],
+	"master":[0.99]
   },
   "targeting": {
     "class": "CoordinatedTargeting",
