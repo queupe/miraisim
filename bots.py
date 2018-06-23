@@ -8,6 +8,7 @@ import sim
 STATUS_ACTIVE = 'bot_status_active'
 STATUS_CREATED = 'bot_status_created'
 STATUS_TEARDOWN = 'bot_status_teardown'
+HOST_ID_BOT_MASTER = 0
 
 
 def create_factory(config):
@@ -144,9 +145,14 @@ class FixedRateBot(BotMixin, FixedRateMixin):  # {{{
         def __init__(self, config):
             assert len(config['bot']['params']) == 1
             self.rate = float(config['bot']['params'][0])
+            assert len(config['bot']['master']) == 1
+            self.rateMaster = float(config['bot']['master'][0])
 
         def __call__(self, hid):
-            return FixedRateBot(hid, self.rate)
+            if hid == HOST_ID_BOT_MASTER:
+                return FixedRateBot(hid, self.rateMaster)
+            else:
+                return FixedRateBot(hid, self.rate)
     # }}}
 
     def __init__(self, hid, rate):
