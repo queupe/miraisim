@@ -1,13 +1,13 @@
 {
-  "logfile": "test-average.log.txt",
+  "logfile": "test-average_02.log.txt",
   "loglevel": "INFO",
-  "endtime": 100000,
-  "maxhid": 10000,
-  "frac_vulnerable": 0.1,
+  "endtime": 10000,
+  "maxhid": 1000,
+  "frac_vulnerable": 0.999,
   "bot": {
     "class": "FixedRateBot",
-    "params": [0.01],
-	"master":[0.99]
+    "params": [0.045],
+	"master": [0.5]
   },
   "targeting": {
     "class": "CoordinatedTargeting",
@@ -19,15 +19,15 @@
     "timeout": 2.0
   },
   "nrtts_auth": 7,
-  "nrtts_infect": 70,
+  "nrtts_infect": 700,
   "dists": {
     "host_on_time": {
       "dist": "Exponential",
-      "params": [3600.0]
+      "params": [200.0]
     },
     "host_off_time": {
       "dist": "Exponential",
-      "params": [600.0]
+      "params": [2.0]
     }
   }
 }

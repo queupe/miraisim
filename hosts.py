@@ -19,6 +19,7 @@ class Host(object):  # {{{
         sim.host_tracker.add(host)
         ev = (sim.now + host.on_time, host.shutdown, None)
         sim.enqueue(ev)
+        sim.add_on_host(hid)
 
     def __init__(self, hid, status):
         self.hid = hid
@@ -38,6 +39,7 @@ class Host(object):  # {{{
             self.infection_time = sim.now
             self.bot = sim.bot_factory(self.hid)  # pylint: disable=not-callable
             self.bot.start()
+            sim.add_infected_host(self.hid)
             return True
 
     def shutdown(self, _none):
@@ -47,6 +49,9 @@ class Host(object):  # {{{
             infection = self.infection_time
         logging.info('hid %d on_time %f infected %f', self.hid, self.on_time,
                      (sim.now - infection)/self.on_time)
+        #Add by Vilc - August, 09, 2018
+        sim.add_off_host(self.hid, self.status == STATUS_INFECTED, self.on_time, sim.now - infection)
+
         off_time = sim.dist_host_off_time()  # pylint: disable=not-callable
         ev = (sim.now + off_time, Host.bootup, self.hid)
         sim.enqueue(ev)

@@ -1,0 +1,126 @@
+{
+  "logfile": "test-average_02.log.txt",
+  "loglevel": "INFO",
+  "endtime": 10000,
+  "maxhid": 100,
+  "frac_vulnerable": 1.0,
+  "bot": {
+    "class": "FixedRateBot",
+    "params": [5.0],
+    "master": [200.0]
+  },
+  "targeting": {
+    "class": "CoordinatedTargeting",
+    "params": [600.0]
+  },
+  "e2e_latency": {
+    "min": 0.010,
+    "max": 0.400,
+    "timeout": 2.0
+  },
+  "nrtts_auth": 7,
+  "nrtts_infect": 700,
+  "dists": {
+    "host_on_time": {
+      "dist": "Exponential",
+      "params": [8000.0]
+    },
+    "host_off_time": {
+      "dist": "Uniform",
+      "params": [0.0, 0.01]
+    }
+  },
+  "min":{
+      "endtime": 10000,
+      "maxhid": 3,
+      "frac_vulnerable": 1.0,
+      "bot": {
+        "class": "FixedRateBot",
+        "params": [0.000045],
+        "master": [0.2]
+      },
+      "targeting": {
+        "class": "CoordinatedTargeting",
+        "params": [100.0]
+      },
+      "e2e_latency": {
+        "min": 0.040,
+        "max": 0.050,
+        "timeout": 1.0
+      },
+      "nrtts_auth": 7,
+      "nrtts_infect": 7,
+      "dists": {
+        "host_on_time": {
+          "dist": "Exponential",
+          "params": [2000.0]
+        },
+        "host_off_time": {
+          "dist": "Uniform",
+          "params": [10.0, 20.0]
+        }
+      }
+  },
+  "max":{
+      "endtime": 10000,
+      "maxhid": 100,
+      "frac_vulnerable": 1.0,
+      "bot": {
+        "class": "FixedRateBot",
+        "params": [0.05],
+        "master": [0.5]
+      },
+      "targeting": {
+        "class": "CoordinatedTargeting",
+        "params": [1000.0]
+      },
+      "e2e_latency": {
+        "min": 0.200,
+        "max": 1.000,
+        "timeout": 4.0
+      },
+      "nrtts_auth": 700,
+      "nrtts_infect": 700,
+      "dists": {
+        "host_on_time": {
+          "dist": "Exponential",
+          "params": [3000.0]
+        },
+        "host_off_time": {
+          "dist": "Uniform",
+          "params": [100.0, 1000.0]
+        }
+      }
+  },
+  "desc": {
+      "endtime": "Total time of simulation",
+      "maxhid": "Total of individuals",
+      "frac_vulnerable": "Fraction of susceptible",
+      "bot": {
+        "class": "Type of contamination rate",
+        "params": "Endogenous infection rate",
+    	"master": "Exogenous infection rate"
+      },
+      "targeting": {
+        "class": "Class of Targeting",
+        "params": "Class of Targeting parameters"
+      },
+      "e2e_latency": {
+        "min": "Minimum latency",
+        "max": "Maximum latency",
+        "timeout": "Timeout"
+      },
+      "nrtts_auth": 7,
+      "nrtts_infect": 700,
+      "dists": {
+        "host_on_time": {
+          "dist": "On time kind of probability distribution",
+          "params": "On time parameters of the distribution"
+        },
+        "host_off_time": {
+          "dist": "Off time kind of probability distribution",
+          "params": "Off time parameters of the distribution"
+        }
+      }
+  }
+}

@@ -29,7 +29,7 @@ class FixedRateMixin(object):  # {{{
         sim.enqueue(ev)
 
     def attempt_auth_begin(self):
-        ev = (sim.now + 1/self.rate, self.attempt_auth, None)
+        ev = (sim.now + 1/(self.rate), self.attempt_auth, None)
         sim.enqueue(ev)
 
     def attempt_auth_success(self, delay, hid):
@@ -123,11 +123,14 @@ class BotMixin(object):  # {{{
             logging.debug('%s dst %d unreachable failure', self, hid)
             self.targeting.set_unreach(hid)
             delay = sim.e2e_latency.get_timeout()
+            sim.add_attempt_infect(self.hid, hid, status, False) #hist
         elif status in [hosts.STATUS_VULNERABLE]:
             logging.info('%s dst %d infect success', self, hid)
             self.targeting.set_bot(hid)
             host.infect()
             delay = sim.e2e_latency.get_infect_delay(self.hid, hid)
+            #Add by Vilc - AUGUST 08,2018 - modified SET 28, 2018
+            sim.add_attempt_infect(self.hid, hid, status, True)
 
         self.attempt_infect_end(delay)
 
@@ -167,6 +170,7 @@ class MultithreadBot(BotMixin, MultithreadMixin):  # {{{
     class Factory(object):  # {{{
         def __init__(self, config):
             assert len(config['bot']['params']) == 1
+            assert len(config['bot']['master']) == 1
             self.nthreads = float(config['bot']['params'][0])
 
         def __call__(self, hid):
