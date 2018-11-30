@@ -5,9 +5,9 @@ import hosts
 import sim
 
 
-STATUS_ACTIVE = 'bot_status_active'
-STATUS_CREATED = 'bot_status_created'
-STATUS_TEARDOWN = 'bot_status_teardown'
+STATUS_ACTIVE      = 'bot_status_active'
+STATUS_CREATED     = 'bot_status_created'
+STATUS_TEARDOWN    = 'bot_status_teardown'
 HOST_ID_BOT_MASTER = 0
 
 
@@ -182,4 +182,67 @@ class MultithreadBot(BotMixin, MultithreadMixin):  # {{{
         MultithreadMixin.__init__(self, nthreads)
         self.hid = int(hid)
         logging.debug('%s nthreads %d', self, self.nthreads)
+# }}}
+
+class BroadcastBot(BotMixin, FixedRateMixin):  # {{{
+    class Factory(object):  # {{{
+        def __init__(self, config):
+            assert len(config['bot']['params']) == 1
+            self.rate = float(config['bot']['params'][0])
+            assert len(config['bot']['master']) == 1
+            self.rateMaster = float(config['bot']['master'][0])
+            assert len(config['bot']['strength']) == 1
+            print(config['bot']['strength'][0])
+            self.strength = float(config['bot']['strength'][0])
+
+        def __call__(self, hid):
+            if hid == HOST_ID_BOT_MASTER:
+                return BroadcastBot(hid, self.rateMaster, self.strength)
+            else:
+                return BroadcastBot(hid, self.rate, self.strength)
+    # }}}
+
+    def __init__(self, hid, rate, strength):
+        BotMixin.__init__(self)
+        FixedRateMixin.__init__(self, rate)
+        self.hid = int(hid)
+        self.strength = strength
+        logging.debug('%s rate %f and strength %f', self, self.rate,self.strength)
+
+    # Redefine funciton from BotMixin
+    def attempt_auth(self, _data):
+        logging.debug('%s entering', self)
+        if self.status == STATUS_TEARDOWN:
+            logging.debug('%s teardown abort', self)
+            return
+
+        self.attempt_auth_begin()
+        lst_hid = self.targeting.get_all()
+
+        j = 0
+        for dsthid in self.targeting.get_all():
+            #dsthid = self.targeting.get_target()
+            j += 1
+            _host, status = sim.host_tracker.get(dsthid)
+            #if j ==1:
+                #print('{} dst {:d}'.format(self, len(self.targeting.get_all())))
+
+            logging.debug('%s dst %d status %s', self, dsthid, status)
+
+
+            if status in [hosts.STATUS_SECURE,
+                          hosts.STATUS_SHUTDOWN,
+                          hosts.STATUS_INFECTED]:
+                delay = sim.e2e_latency.get_timeout()
+                self.targeting.set_unreach(dsthid)
+                self.attempt_auth_failure(delay)
+            elif status in [hosts.STATUS_VULNERABLE]:
+                # cunha @20180111.1335 not sure we need this FIXME
+                # include infect delay:
+                # delay += sim.e2e_latency.get_infect_delay(self.hid, dsthid)
+                delay = sim.e2e_latency.get_auth_delay(self.hid, dsthid) + self.strength
+                self.attempt_auth_success(delay, dsthid)
+
+
+
 # }}}

@@ -5,9 +5,10 @@
   "maxhid": 100,
   "frac_vulnerable": 1.0,
   "bot": {
-    "class": "FixedRateBot",
-    "params": [5.0],
-    "master": [200.0]
+      "class": "BroadcastBot",
+      "params": [0.05],
+      "master": [0.5],
+      "strength":[0.0]
   },
   "targeting": {
     "class": "CoordinatedTargeting",
@@ -32,12 +33,13 @@
   },
   "min":{
       "endtime": 10000,
-      "maxhid": 3,
+      "maxhid": 10,
       "frac_vulnerable": 1.0,
       "bot": {
-        "class": "FixedRateBot",
-        "params": [0.000045],
-        "master": [0.2]
+          "class": "BroadcastBot",
+          "params": [1.0],
+          "master": [10.0],
+          "strength":[0.0]
       },
       "targeting": {
         "class": "CoordinatedTargeting",
@@ -66,9 +68,10 @@
       "maxhid": 100,
       "frac_vulnerable": 1.0,
       "bot": {
-        "class": "FixedRateBot",
-        "params": [0.05],
-        "master": [0.5]
+        "class": "BroadcastBot",
+        "params": [10.0],
+        "master": [100.0],
+        "strength":[0.0]
       },
       "targeting": {
         "class": "CoordinatedTargeting",

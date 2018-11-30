@@ -77,6 +77,8 @@ class CoordinatedTargeting(object):  # {{{
 
         def choice(self): return random.choice(self.hids)
 
+        def get(self): return self.hids
+
         def __contains__(self, hid): return hid in self.hid2pos
 
         def __len__(self): return len(self.hids)
@@ -99,6 +101,15 @@ class CoordinatedTargeting(object):  # {{{
         while target in self:
             target = self.targets.choice()
         return target
+
+    def get_all(self):
+        if not self.targets.hids:
+            return list()
+        tgt = list()
+        for i in range(1, self.maxhid):
+            if i != self:
+                tgt.append(i)
+        return tgt
 
     def set_unreach(self, hid):
         self.hid2tstamp[hid] = sim.now
