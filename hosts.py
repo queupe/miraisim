@@ -7,6 +7,8 @@ STATUS_SHUTDOWN = 'host_status_shutdown'
 STATUS_SECURE = 'host_status_secure'
 STATUS_VULNERABLE = 'host_status_vulnerable'
 STATUS_INFECTED = 'host_status_infected'
+STATUS_INFECTED_END = 'host_status_endogenous_infected'
+STATUS_INFECTED_EXO = 'host_status_exogenous_infected'
 
 # Testing 2 new branch
 # We only create hosts for vulnerable and infected (online) devices.
@@ -28,29 +30,51 @@ class Host(object):  # {{{
         self.infection_time = None
         self.bot = None
 
-    def infect(self):
+    def infect(self, from_hid = -1):
         logging.debug('hid %d', self.hid)
         assert self.status != STATUS_SECURE
         assert self.status != STATUS_SHUTDOWN
-        if self.status == STATUS_INFECTED:
+        if self.status == STATUS_INFECTED or self.status == STATUS_INFECTED_END or self.status == STATUS_INFECTED_EXO:
             return False
         else:
             self.status = STATUS_INFECTED
+            if from_hid == 0:
+                self.status = STATUS_INFECTED_EXO
+            if from_hid > 0:
+                self.status = STATUS_INFECTED_END
+
             self.infection_time = sim.now
             self.bot = sim.bot_factory(self.hid)  # pylint: disable=not-callable
             self.bot.start()
-            sim.add_infected_host(self.hid)
+            sim.add_infected_host(self.hid, from_hid)
             return True
+
+    def master_infect (self, from_hid = -1):
+        self.status = STATUS_INFECTED_EXO
+        self.infection_time = sim.now
+        self.bot = sim.master_bot_factory(self.hid)  # pylint: disable=not-callable
+        self.bot.master_start()
+        sim.add_infected_host(self.hid, from_hid)
+        return True
 
     def shutdown(self, _none):
         infection = sim.now
-        if self.status == STATUS_INFECTED:
+        if self.status == STATUS_INFECTED or self.status == STATUS_INFECTED_END or self.status == STATUS_INFECTED_EXO:
             self.bot.teardown()
             infection = self.infection_time
         logging.info('hid %d on_time %f infected %f', self.hid, self.on_time,
                      (sim.now - infection)/self.on_time)
         #Add by Vilc - August, 09, 2018
-        sim.add_off_host(self.hid, self.status == STATUS_INFECTED, self.on_time, sim.now - infection)
+        # Modified Jan 17, 2019
+        status_infected = sim._SUSCETIBLE_
+        if self.status == STATUS_INFECTED:
+            status_infected = sim._INFECTED_
+        elif self.status == STATUS_INFECTED_END:
+            status_infected = sim._INFECTED_END_
+        elif self.status == STATUS_INFECTED_EXO:
+            status_infected = sim._INFECTED_EXO_
+
+        sim.add_off_host(self.hid, status_infected, self.on_time, sim.now - infection)
 
         off_time = sim.dist_host_off_time()  # pylint: disable=not-callable
         ev = (sim.now + off_time, Host.bootup, self.hid)
@@ -78,6 +102,7 @@ class HostTracker(object):  # {{{
         assert (host.hid % self.vulnerable_period) == 0
         assert host.hid not in self.hid2host
         self.hid2host[host.hid] = host
+        #print('HostTracker {:d}\n'.format(host.hid))
 
     def delete(self, host):
         assert host.hid in self.hid2host
@@ -110,6 +135,7 @@ class E2ELatency(object):  # {{{
         return self.timeout
 
     def get_auth_delay(self, srchid, dsthid):
+        #print(srchid, dsthid, sim.config['nrtts_auth'])
         return self.get(srchid, dsthid) * sim.config['nrtts_auth']
 
     def get_infect_delay(self, srchid, dsthid):

@@ -102,11 +102,26 @@ class CoordinatedTargeting(object):  # {{{
             target = self.targets.choice()
         return target
 
+    def get_n(self, strength = 1):
+        lst = list()
+        if not self.targets.hids:
+            target = random.randint(0, self.maxhid)
+            lst.append(target)
+            return lst
+
+        if strength < 1:
+            strength *= self.maxhid
+        elif strength >= self.maxhid:
+            return self.get_all()
+
+        target = random.sample(range(1, self.maxhid + 1), round(strength))
+        return target
+
     def get_all(self):
         if not self.targets.hids:
             return list()
         tgt = list()
-        for i in range(1, self.maxhid):
+        for i in range(1, self.maxhid + 1):
             if i != self:
                 tgt.append(i)
         return tgt
