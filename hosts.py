@@ -19,8 +19,10 @@ class Host(object):  # {{{
         host = Host(hid, STATUS_VULNERABLE)
         logging.info('hid %d on_time %f', hid, host.on_time)
         sim.host_tracker.add(host)
-        ev = (sim.now + host.on_time, host.shutdown, None)
-        sim.enqueue(ev)
+        # Alteração em 30MAR2019, retirado o evento de desligar após ligar
+        # As duas próximas linhas abaixo,comentadas, irão entrar no evento da contaminação.
+        #ev = (sim.now + host.on_time, host.shutdown, None)
+        #sim.enqueue(ev)
         sim.add_on_host(hid)
 
     def __init__(self, hid, status):
@@ -42,6 +44,10 @@ class Host(object):  # {{{
                 self.status = STATUS_INFECTED_EXO
             if from_hid > 0:
                 self.status = STATUS_INFECTED_END
+            # Alteração em 30MAR2019, incluído o evento de desligar após ser contaminado
+            # As duas próximas linhas abaixo, foram incluídas.
+            ev = (sim.now + self.on_time, self.shutdown, None)
+            sim.enqueue(ev)
 
             self.infection_time = sim.now
             self.bot = sim.bot_factory(self.hid)  # pylint: disable=not-callable
