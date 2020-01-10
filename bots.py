@@ -45,8 +45,8 @@ class FixedRateMixin(object):  # {{{
         ev = (sim.now + 1/(self.rate), self.attempt_auth, None)
         sim.enqueue(ev)
 
-    def attempt_auth_success(self, delay, hid):
-        ev = (sim.now + delay, self.attempt_infect, hid)
+    def attempt_auth_success(self, delay, info):
+        ev = (sim.now + delay, self.attempt_infect, info)
         sim.enqueue(ev)
 
     def attempt_auth_failure(self, _delay):
@@ -74,8 +74,8 @@ class MultithreadMixin(object):  # {{{
     def attempt_auth_begin(self):
         pass
 
-    def attempt_auth_success(self, delay, hid):
-        ev = (sim.now + delay, self.attempt_infect, hid)
+    def attempt_auth_success(self, delay, info):
+        ev = (sim.now + delay, self.attempt_infect, info)
         sim.enqueue(ev)
 
     def attempt_auth_failure(self, delay):
@@ -103,8 +103,8 @@ class ExponetialRateMixin(object):  # {{{
         ev = (sim.now + random.expovariate(float(self.rate)), self.attempt_auth, None)
         sim.enqueue(ev)
 
-    def attempt_auth_success(self, delay, hid):
-        ev = (sim.now + delay, self.attempt_infect, hid)
+    def attempt_auth_success(self, delay, info):
+        ev = (sim.now + delay, self.attempt_infect, info)
         sim.enqueue(ev)
 
     def attempt_auth_failure(self, _delay):
@@ -133,7 +133,7 @@ class BotMixin(object):  # {{{
         self.attempt_auth_begin()
 
         dsthid = self.targeting.get_target()
-        _host, status = sim.host_tracker.get(dsthid)
+        host, status = sim.host_tracker.get(dsthid)
         logging.debug('%s dst %d status %s', self, dsthid, status)
 
         if status in [hosts.STATUS_SECURE,
@@ -142,24 +142,29 @@ class BotMixin(object):  # {{{
             delay = sim.e2e_latency.get_timeout()
             self.targeting.set_unreach(dsthid)
             self.attempt_auth_failure(delay)
-        elif status in [hosts.STATUS_VULNERABLE]:
+        elif status in [hosts.STATUS_VULNERABLE] and sim.graph_connected(self.hid, dsthid):
             # cunha @20180111.1335 not sure we need this FIXME
             # include infect delay:
             # delay += sim.e2e_latency.get_infect_delay(self.hid, dsthid)
             delay = sim.e2e_latency.get_auth_delay(self.hid, dsthid)
-            self.attempt_auth_success(delay, dsthid)
+            self.attempt_auth_success(delay, [dsthid, host.infection_number])
 
-    def attempt_infect(self, hid):
+    def attempt_infect(self, info):
+        hid = info[0]
         logging.debug('%s entering', self)
         if self.status == STATUS_TEARDOWN:
             logging.debug('%s teardown abort', self)
             return
 
         host, status = sim.host_tracker.get(hid)
+        src, _status = sim.host_tracker.get(self.hid)
         logging.debug('%s dst %d status %s', self, hid, status)
 
         if hid in self.targeting:
             logging.debug('%s dst %d in-cache abort', self, hid)
+            delay = 0
+        elif src.infection_number != info[1]:
+            logging.debug('%s dst %d infection versions () and ()', self, hid,src.infection_number, info[1])
             delay = 0
         elif status in [hosts.STATUS_SECURE,
                         hosts.STATUS_SHUTDOWN,
@@ -270,7 +275,7 @@ class BroadcastBot(BotMixin, ExponetialRateMixin):  # {{{
         for dsthid in self.targeting.get_all():
             #dsthid = self.targeting.get_target()
             j += 1
-            _host, status = sim.host_tracker.get(dsthid)
+            host, status = sim.host_tracker.get(dsthid)
             #if j ==1:
                 #print('{} dst {:d}'.format(self, len(self.targeting.get_all())))
 
@@ -283,7 +288,7 @@ class BroadcastBot(BotMixin, ExponetialRateMixin):  # {{{
                 delay = sim.e2e_latency.get_timeout()
                 #self.targeting.set_unreach(dsthid)
                 self.attempt_auth_failure(delay)
-            elif status in [hosts.STATUS_VULNERABLE]:
+            elif status in [hosts.STATUS_VULNERABLE] and sim.graph_connected(self.hid, dsthid):
                 # cunha @20180111.1335 not sure we need this FIXME
                 # include infect delay:
                 # delay += sim.e2e_latency.get_infect_delay(self.hid, dsthid)
@@ -291,7 +296,7 @@ class BroadcastBot(BotMixin, ExponetialRateMixin):  # {{{
                     delay = sim.e2e_latency.get_auth_delay(self.hid, dsthid)
                 except: # catch *all* exceptions
                     print(self.hid, dsthid)
-                self.attempt_auth_success(delay, dsthid)
+                self.attempt_auth_success(delay, [dsthid, host.infection_number])
 
 
 class UnicastBot(BotMixin, ExponetialRateMixin):  # {{{
@@ -333,7 +338,7 @@ class UnicastBot(BotMixin, ExponetialRateMixin):  # {{{
         for dsthid in self.targeting.get_n(self.strength):
             #dsthid = self.targeting.get_target()
             j += 1
-            _host, status = sim.host_tracker.get(dsthid)
+            host, status = sim.host_tracker.get(dsthid)
             #if j ==1:
                 #print('{} dst {:d}'.format(self, len(self.targeting.get_all())))
 
@@ -346,7 +351,7 @@ class UnicastBot(BotMixin, ExponetialRateMixin):  # {{{
                 delay = sim.e2e_latency.get_timeout()
                 #self.targeting.set_unreach(dsthid)
                 self.attempt_auth_failure(delay)
-            elif status in [hosts.STATUS_VULNERABLE]:
+            elif status in [hosts.STATUS_VULNERABLE] and sim.graph_connected(self.hid, dsthid):
                 # cunha @20180111.1335 not sure we need this FIXME
                 # include infect delay:
                 # delay += sim.e2e_latency.get_infect_delay(self.hid, dsthid)
@@ -354,7 +359,7 @@ class UnicastBot(BotMixin, ExponetialRateMixin):  # {{{
                     delay = sim.e2e_latency.get_auth_delay(self.hid, dsthid)
                 except: # catch *all* exceptions
                     print(self.hid, dsthid)
-                self.attempt_auth_success(delay, dsthid)
+                self.attempt_auth_success(delay, [dsthid, host.infection_number])
 
 
 # }}}

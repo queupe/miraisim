@@ -21,6 +21,7 @@ master_bot_factory = None
 targeting_factory = None
 dist_host_on_time = None
 dist_host_off_time = None
+graph_connected = None
 
 heal_hosts = 0
 infected_hosts = 0
