@@ -30,6 +30,7 @@ class Host(object):  # {{{
         self.status = status
         self.on_time = sim.dist_host_on_time()  # pylint: disable=not-callable
         self.infection_time = None
+        self.infection_number = 0
         self.bot = None
 
     def infect(self, from_hid = -1):
@@ -46,6 +47,7 @@ class Host(object):  # {{{
                 self.status = STATUS_INFECTED_END
             # Alteração em 30MAR2019, incluído o evento de desligar após ser contaminado
             # As duas próximas linhas abaixo, foram incluídas.
+            self.infection_number += 1
             ev = (sim.now + self.on_time, self.shutdown, None)
             sim.enqueue(ev)
 

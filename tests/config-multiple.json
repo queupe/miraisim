@@ -2,7 +2,7 @@
   "logfile": "test-average_02.log.txt",
   "loglevel": "INFO",
   "endtime": 10000,
-  "maxhid": 100,
+  "maxhid": 500,
   "frac_vulnerable": 1.0,
   "bot": {
       "class": "BroadcastBot",
@@ -14,6 +14,10 @@
   "targeting": {
     "class": "CoordinatedTargeting",
     "params": [50.0]
+  },
+  "graph":{
+    "class": "NAryClusters",
+    "params": [7]
   },
   "e2e_latency": {
     "min": 0.010,
