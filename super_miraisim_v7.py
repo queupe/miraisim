@@ -142,13 +142,13 @@ def main():
         simulation(opts, evt)
         evt += 1
 
-    evt = 4000
-    for up_time in up_time_vec:
-        with open(opts.configfn, 'r') as fd:
-            sim.config = json.load(fd)
-        sim.config['dists']['host_off_time']['params'][0] = up_time
-        simulation(opts, evt)
-        evt += 1
+    #evt = 4000
+    #for up_time in up_time_vec:
+    #    with open(opts.configfn, 'r') as fd:
+    #        sim.config = json.load(fd)
+    #    sim.config['dists']['host_off_time']['params'][0] = up_time
+    #    simulation(opts, evt)
+    #    evt += 1
 
 
     return 0

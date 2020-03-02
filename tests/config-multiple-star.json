@@ -16,7 +16,7 @@
     "params": [50.0]
   },
   "graph":{
-    "class": "Staring",
+    "class": "Star",
     "params": [7]
   },
   "e2e_latency": {

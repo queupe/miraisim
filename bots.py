@@ -134,6 +134,8 @@ class BotMixin(object):  # {{{
 
         dsthid = self.targeting.get_target()
         host, status = sim.host_tracker.get(dsthid)
+        host_src, _status_src = sim.host_tracker.get(self.hid)
+
         logging.debug('%s dst %d status %s', self, dsthid, status)
 
         if status in [hosts.STATUS_SECURE,
@@ -147,7 +149,7 @@ class BotMixin(object):  # {{{
             # include infect delay:
             # delay += sim.e2e_latency.get_infect_delay(self.hid, dsthid)
             delay = sim.e2e_latency.get_auth_delay(self.hid, dsthid)
-            self.attempt_auth_success(delay, [dsthid, host.infection_number])
+            self.attempt_auth_success(delay, [dsthid, host_src.infection_number])
 
     def attempt_infect(self, info):
         hid = info[0]
@@ -164,7 +166,7 @@ class BotMixin(object):  # {{{
             logging.debug('%s dst %d in-cache abort', self, hid)
             delay = 0
         elif src.infection_number != info[1]:
-            logging.debug('%s dst %d infection versions () and ()', self, hid,src.infection_number, info[1])
+            logging.info('%s dst %d infection versions (%d) and (%d)', self, hid,src.infection_number, info[1])
             delay = 0
         elif status in [hosts.STATUS_SECURE,
                         hosts.STATUS_SHUTDOWN,
@@ -276,6 +278,7 @@ class BroadcastBot(BotMixin, ExponetialRateMixin):  # {{{
             #dsthid = self.targeting.get_target()
             j += 1
             host, status = sim.host_tracker.get(dsthid)
+            host_src, _status_src = sim.host_tracker.get(self.hid)
             #if j ==1:
                 #print('{} dst {:d}'.format(self, len(self.targeting.get_all())))
 
@@ -296,7 +299,7 @@ class BroadcastBot(BotMixin, ExponetialRateMixin):  # {{{
                     delay = sim.e2e_latency.get_auth_delay(self.hid, dsthid)
                 except: # catch *all* exceptions
                     print(self.hid, dsthid)
-                self.attempt_auth_success(delay, [dsthid, host.infection_number])
+                self.attempt_auth_success(delay, [dsthid, host_src.infection_number])
 
 
 class UnicastBot(BotMixin, ExponetialRateMixin):  # {{{
@@ -339,6 +342,7 @@ class UnicastBot(BotMixin, ExponetialRateMixin):  # {{{
             #dsthid = self.targeting.get_target()
             j += 1
             host, status = sim.host_tracker.get(dsthid)
+            host_src, _status_src = sim.host_tracker.get(self.hid)
             #if j ==1:
                 #print('{} dst {:d}'.format(self, len(self.targeting.get_all())))
 
@@ -359,7 +363,7 @@ class UnicastBot(BotMixin, ExponetialRateMixin):  # {{{
                     delay = sim.e2e_latency.get_auth_delay(self.hid, dsthid)
                 except: # catch *all* exceptions
                     print(self.hid, dsthid)
-                self.attempt_auth_success(delay, [dsthid, host.infection_number])
+                self.attempt_auth_success(delay, [dsthid, host_src.infection_number])
 
 
 # }}}

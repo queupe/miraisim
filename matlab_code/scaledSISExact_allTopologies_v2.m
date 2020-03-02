@@ -1,6 +1,7 @@
 function rho_end = scaledSISExact_allTopologies(vec_lambda, vec_mu, vec_gamma, vec_N, f_connection)
 
-
+    global NumUsu;
+    
     %% Real calculates, using the formulate exact
     % Lambda represents the exogenous infection factor
     qtd_lambda  = length(vec_lambda);
@@ -17,25 +18,15 @@ function rho_end = scaledSISExact_allTopologies(vec_lambda, vec_mu, vec_gamma, v
     ilambda = 0;
     for sup_lambda = vec_lambda
         ilambda = ilambda +1;
-
         imu = 0;
         for mu = vec_mu
             imu = imu + 1;
-
-            % Initializing \gamma index
             igamma=0;
             for gamma = vec_gamma
                 igamma=igamma+1;
-                %disp("Valor de gamma:")
-                %disp(gamma)
-
-                % Inicializing N index
                 iN=0;
-
-                % For diferent N values
                 for N=vec_N %% ((sup_lambda-inf_lambda)/qtd_lambda):sup_lambda
                     iN=iN+1;
-                    
                     % Define lambda (exogenous infection) in function of N
                     lambda = sup_lambda/N;
                     % Connectivity Matrix to completed graph
@@ -45,6 +36,7 @@ function rho_end = scaledSISExact_allTopologies(vec_lambda, vec_mu, vec_gamma, v
                             if i == j
                                 A(i,i)=0;
                             else
+                                NumUsu = N;
                                 A(i,j)=f_connection(i,j);
                             end
                             
@@ -55,75 +47,62 @@ function rho_end = scaledSISExact_allTopologies(vec_lambda, vec_mu, vec_gamma, v
 
                     % \pi is a vector representing the constant of equilibrium of
                     % transition states matrix Q and the probability of the states
-                    % Initializing \pi
-                    pi            = zeros(N+1,1);
-                    pi_ninf       = zeros(1,N+1);
-                    pi_tagged_inf = zeros(1,N+1);
-
+                    % Initializing \tilde{\pi}
+                    tilde_pi      = zeros(N+1,1);
+                    iota          = zeros(1,N+1);
                    
                     % To contamitations 0..N
                     for i=0:N
-                        
                         if (i>0)
+                            % generete all permutations
                             C = nchoosek(1:N,i);
                             nc = size(C,1);
                             allperm = accumarray([repmat((1:nc)',i,1),C(:)],1);
-                            %fprintf("nc=%d",nc)
+                            iota(1,i+1) = nc;
+                            
+                            % To all permutations 1..nc
                             for j=1:nc
+                                % select next permutation
                                 x = allperm(j,:)';
-                                % To connetivity A:
                                 % my_exponent1 is number of contamined edges
-                                %size(x)
-                                %size(A)
                                 my_exponent1=((x'*A*x)/2);
-
-                                pi(i+1) = pi(i+1) + (lambda/mu)^i * gamma^my_exponent1;
-                                % differents arrangment of i contamined nodes
-                                pi_ninf(i+1)=(nchoosek(N,i+1-1))*pi(i+1);
+                                tilde_pi(i+1) = tilde_pi(i+1) + ((lambda/mu)^i * (gamma^my_exponent1));
                             end
-                        
-
-                            % probability of a tagged node being infected
-                            pi_tagged_inf(i+1)= (nchoosek(N-1,i-1))*pi(i+1);
                         else
-                            % probability of a tagged node being infected is zero
-                            pi_tagged_inf(i+1)= 0; % pi(i+1);
+                            % zero contaminads 
+                            % \tilde{\pi}_0 = (\frac{\lambda}{\mu})^0 \gamma^0 = 1
+                            tilde_pi(i+1) = 1;
                         end
-
                     end
-                    spi{igamma,iN}.gamma=gamma;
-                    spi{igamma,iN}.lambda=lambda;
-                    spi{igamma,iN}.pi=pi;
-                    spi{igamma,iN}.pi_ninf=pi_ninf;
-                    spi{igamma,iN}.pi_tagged_inf=pi_tagged_inf;
-                    spi{igamma,iN}.N=N;
-                    fprintf("Finalizado N=%2d \t lambda=%6.2f \t gamma=%5.3f \t mu=%5.3f\n", N, sup_lambda, gamma, mu);
+                    
+                    fprintf("N=%d lamb=%4.1f mu=%3.1f gamma=%4.2f",N, lambda, mu, gamma)
+                    %fprintf("N=%d",N)
+                    for ch = 1:length(tilde_pi)
+                        fprintf("\t \\tilde{\\pi_%d}=%.3f",ch, tilde_pi(ch))
+                    end
+                    fprintf("\n")
+                    
+                    % single values
+                    spi{iN}.N     = N;
+                    spi{iN}.gamma = gamma;
+                    spi{iN}.lambda= lambda;
+                    spi{iN}.lambda= mu;
+                    % vector values
+                    spi{iN}.iota  = iota;
+                    spi{iN}.pi    = tilde_pi;
+                    %fprintf("Finalizado N=%2d \t lambda=%6.2f \t gamma=%5.3f \t mu=%5.3f\n", N, sup_lambda, gamma, mu);
                 end
-            end
-
-            igamma=0;
-            % for all gamma
-            for gamma=vec_gamma
-                igamma=igamma+1;
+                
                 iN=0;
-                meaninfected=zeros(qtd_N,1);
-                pitaggedinfected=zeros(qtd_N,1);
-
                 % for all N
                 for N=vec_N %
                     iN=iN+1;
-                    pi=spi{igamma,iN}.pi_ninf;
-                    meaninfected(iN)=(pi/sum(pi))*[0:1:N]';
-
-                    pi_tagged=spi{igamma,iN}.pi_tagged_inf;
-                    pitaggedinfected(iN)=sum(pi_tagged)/sum(pi);
-                    %rho(iN) = ((sup_lambda/iN)*(gamma^(N/2))) / ( 1 + ((sup_lambda/iN)*(gamma^(N/2))));
-                
-                    rho(ilambda, imu, igamma, iN) = pitaggedinfected(iN);
+                    tilde_pi = spi{iN}.pi;
+                    mean_infected = [0:N]*(tilde_pi/sum(tilde_pi));
+                    prob_infected = mean_infected/iN;
+                    rho(ilambda, imu, igamma, iN) = prob_infected;
                 end
-
-
-            end
+            end  % vec_gamma
         end % vec_mu
     end % vec_lambda
     
